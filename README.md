@@ -10,4 +10,4 @@ Convars
 
 Installation
 -------
-Compile the navmesh.sp and zbot.sp files, and move them into your server's `addons/sourcemod/plugins` folder. The map must have an associated navmesh for the bots to function.
+Compile the navmesh.sp and zbot.sp files, and move them into your server's `addons/sourcemod/plugins` folder, the navmesh.inc file must be placed in your compiler's includes to compile the plugins. The map must have an associated navmesh for the bots to function.
