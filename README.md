@@ -1,6 +1,6 @@
 # SZF Bots
 
-A basic bot support plugin for the [Super Zombie Fortress](https://github.com/redsunservers/SuperZombieFortress) gamemode using [KittyRifter's navmesh plugin](https://github.com/KitRifty/sourcepawn-navmesh/tree/master) to pathfind.
+A basic bot support plugin for the [Super Zombie Fortress](https://github.com/redsunservers/SuperZombieFortress) gamemode using [KittyRifty's navmesh plugin](https://github.com/KitRifty/sourcepawn-navmesh/tree/master) to pathfind.
 
 Convars
 -------
