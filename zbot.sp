@@ -143,6 +143,21 @@ bool BuildNavPath(int client, float flGoalPos[3])
         }
     }
 
+    // Some paths are okay to skip to, others cant be passed through like walls
+    if (!bCompletePath && closestArea != INVALID_NAV_AREA)
+    {
+        float flClosestCenter[3];
+        closestArea.GetCenter(flClosestCenter);
+        flClosestCenter[2] = closestArea.GetZ(flClosestCenter);
+
+        if (!HasClearPath(flClosestCenter, flGoalPos))
+        {
+            g_aPathNodes[client].Clear();
+            g_iCurrentNode[client] = -1;
+            return false;
+        }
+    }
+
     g_aPathNodes[client].Clear();
 
     g_aPathNodes[client].PushArray(flGoalPos, 3);
@@ -258,6 +273,8 @@ void FollowPath(int client, float vel[3], float angles[3], int &buttons, float f
     if (flDist2D < 32.0)
     {
         g_iCurrentNode[client]--;
+        if (g_iCurrentNode[client] < 0)
+	        g_flNextPathUpdate[client] = 0.0;
         return;
     }
 
@@ -266,6 +283,8 @@ void FollowPath(int client, float vel[3], float angles[3], int &buttons, float f
     if (botArea != INVALID_NAV_AREA && nodeArea != INVALID_NAV_AREA && botArea == nodeArea)
     {
         g_iCurrentNode[client]--;
+        if (g_iCurrentNode[client] < 0)
+	        g_flNextPathUpdate[client] = 0.0;
         return;
     }
 
@@ -389,6 +408,19 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 /////////////
 /* Helpers */
 /////////////
+
+bool HasClearPath(const float flFrom[3], const float flTo[3], float flTraceHeight = 45.0)
+{
+    float flStart[3], flEnd[3];
+    flStart = flFrom;
+    flEnd   = flTo;
+    flStart[2] += flTraceHeight;
+    flEnd[2]   += flTraceHeight;
+
+    TR_TraceRay(flStart, flEnd, MASK_PLAYERSOLID_BRUSHONLY, RayType_EndPoint);
+
+    return !TR_DidHit();
+}
 
 CNavArea GetAreaAtFeet(const float flPos[3], int iTeam = -1)
 {
