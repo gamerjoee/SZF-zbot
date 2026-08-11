@@ -42,6 +42,8 @@ ConVar    g_hNbPlayerStop;
 #define AIM_UPDATE_RANGE     500.0  
 #define PATH_UPDATE_RATE       0.2   
 
+#define BREAKABLE_RADIUS 120.0
+
 public Plugin myinfo =
 {
     name        = "[SZF] Zombie Bots",
@@ -243,6 +245,18 @@ void FollowPath(int client, float vel[3], float angles[3], int &buttons, float f
         float stuckDuration = flNow - g_flStuckTime[client];
         if (stuckDuration >= STUCK_WAIT_TIME)
         {
+            float flBreakableCenter[3];
+            int iBreakable = FindNearBreakable(client, flBreakableCenter);
+
+            if (iBreakable != -1)
+            {
+                SmoothAimAt(client, flBreakableCenter, angles, 14.0);
+                TeleportEntity(client, NULL_VECTOR, angles, NULL_VECTOR);
+                buttons |= IN_ATTACK;
+                MoveTo(client, flBreakableCenter, angles, vel);
+                return;
+            }
+
             if (GetEntityFlags(client) & FL_ONGROUND)
             {
                 int nOldButtons = GetEntProp(client, Prop_Data, "m_nOldButtons");
@@ -490,6 +504,47 @@ int FindNearestZombiePlayer(int client)
         if (flDist < flBestDist) 
         	flBestDist = flDist; iBest = i;
     }
+    return iBest;
+}
+
+void GetEntityCenter(int entity, float flCenterOut[3])
+{
+    float flOrigin[3], flMins[3], flMaxs[3];
+    GetEntPropVector(entity, Prop_Send, "m_vecOrigin", flOrigin);
+    GetEntPropVector(entity, Prop_Data, "m_vecMins", flMins);
+    GetEntPropVector(entity, Prop_Data, "m_vecMaxs", flMaxs);
+
+    flCenterOut[0] = flOrigin[0] + (flMins[0] + flMaxs[0]) * 0.5;
+    flCenterOut[1] = flOrigin[1] + (flMins[1] + flMaxs[1]) * 0.5;
+    flCenterOut[2] = flOrigin[2] + (flMins[2] + flMaxs[2]) * 0.5;
+}
+
+int FindNearBreakable(int client, float flCenterOut[3])
+{
+    float flBotPos[3];
+    GetClientAbsOrigin(client, flBotPos);
+
+    int iBest = -1;
+    float flBestDist = BREAKABLE_RADIUS;
+
+    int entity = -1;
+    while ((entity = FindEntityByClassname(entity, "func_breakable")) != -1)
+    {
+        if (GetEntProp(entity, Prop_Data, "m_iHealth") <= 1)
+            continue;
+
+        float flCenter[3];
+        GetEntityCenter(entity, flCenter);
+
+        float flDist = GetVectorDistance(flBotPos, flCenter);
+        if (flDist <= flBestDist)
+        {
+            flBestDist  = flDist;
+            iBest = entity;
+            flCenterOut = flCenter;
+        }
+    }
+
     return iBest;
 }
 
